@@ -161,7 +161,7 @@ static class GestorTareas {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
 
-        // Nueva estructura: GestorTareas
+        //GestorTareas
         GestorTareas gestorTareas = new GestorTareas();
 
         //Inicialización de objetos del programa 
@@ -180,13 +180,13 @@ static class GestorTareas {
         int opcion;
         do {
             System.out.println("\n--- MENU PRINCIPAL ---");
-            System.out.println("1) Clientes (Residentes)");
+            System.out.println("1) Clientes/Residentes");
             System.out.println("2) Departamentos");
             System.out.println("3) Pagos y Deudas");
             System.out.println("4) Mantenimiento");
             System.out.println("5) Reportes");
             System.out.println("6) Tareas del condominio");
-            System.out.println("7) Empleados (árbol)");
+            System.out.println("7) Empleados"); //arbol
             System.out.println("0) Salir");
             opcion = leerInt(sc, "Opcion: ");
 
@@ -230,7 +230,7 @@ static class GestorTareas {
        
         int op;
         do {
-            System.out.println("\n--- CLIENTES (Residentes) ---");
+            System.out.println("\n--- Residentes ---");
             System.out.println("1) Registrar residente");
             System.out.println("2) Listar residentes");
             System.out.println("3) Eliminar residente por nombre");
@@ -276,8 +276,38 @@ static class GestorTareas {
                     db.agregarDepartamento(d);
                     System.out.println("Departamento creado."); break;
                 case 2:
-                    if (db.getDepartamentos().isEmpty()) System.out.println("Sin departamentos.");
-                    else for (Departamento dep : db.getDepartamentos()) System.out.println("- " + dep); break;
+                    if (db.getDepartamentos().isEmpty()) {
+                        System.out.println("Sin departamentos.");
+                    } else {
+                        for (Departamento dep : db.getDepartamentos()) {
+                            StringBuilder sb = new StringBuilder();
+                            sb.append("- Depto ").append(dep.getNumero()).append(" | Prop: ");
+                            Residentes propietario = dep.getPropietario();
+                            if (propietario != null) {
+                                sb.append(propietario.getNombre());
+                            } else {
+                                sb.append("Libre");
+                            }
+                            // Mostrar residentes adicionales si existen
+                            List<Residentes> residentes = dep.getResidentes();
+                            boolean hayResidentes = false;
+                            if (residentes != null && !residentes.isEmpty()) {
+                                // Mostrar solo residentes que no son el propietario
+                                List<String> otrosRes = new ArrayList<>();
+                                for (Residentes r : residentes) {
+                                    if (propietario == null || !r.equals(propietario)) {
+                                        otrosRes.add(r.getNombre());
+                                    }
+                                }
+                                if (!otrosRes.isEmpty()) {
+                                    sb.append(" | Res: ");
+                                    sb.append(String.join(", ", otrosRes));
+                                }
+                            }
+                            System.out.println(sb.toString());
+                        }
+                    }
+                    break;
                 case 3:
                     int nd = leerInt(sc, "Número de departamento: ");
                     Departamento dep = db.buscarDepartamento(nd);
@@ -382,10 +412,10 @@ BSTEmpleado arbolEmpleados) {
     int op;
     do {
         System.out.println("\n--- TAREAS DEL CONDOMINIO ---");
-        System.out.println("1) Urgentes (pila)");
-        System.out.println("2) Programadas (cola / prioridad)");
-        System.out.println("3) Pendientes (lista)");
-        System.out.println("4) Estadísticas (recursivo)");
+        System.out.println("1) Urgentes"); //pila
+        System.out.println("2) Programadas"); //(cola / prioridad)
+        System.out.println("3) Pendientes"); //(lista)
+        System.out.println("4) Estadísticas"); //(recursivo)
         System.out.println("0) Volver");
         op = leerInt(sc, "Opción: ");
         switch (op) {
@@ -426,7 +456,7 @@ BSTEmpleado arbolEmpleados) {
 
     // Submenús de pila/cola/lista usando GestorTareas
     private static void menuPilaUrgentes(Scanner sc, GestorTareas gestorTareas, BaseDatos db) {
-        System.out.println("\n--- PILA: TAREAS URGENTES ---");
+        System.out.println("\n--- TAREAS URGENTES ---"); // (PILA)
         System.out.println("1) Agregar tarea urgente");
         System.out.println("2) Realizar tarea urgente");
         System.out.println("3) Ver próximas tareas urgentes");
@@ -467,7 +497,7 @@ BSTEmpleado arbolEmpleados) {
     }
 
     private static void menuColaProgramadas(Scanner sc, GestorTareas gestorTareas, BaseDatos db) {
-        System.out.println("\n--- COLA: TAREAS PROGRAMADAS ---");
+        System.out.println("\n--- TAREAS PROGRAMADAS ---"); //COLA
         System.out.println("1) Agregar tarea programada");
         System.out.println("2) Realizar próxima tarea programada");
         System.out.println("3) Realizar próxima tarea por prioridad");
@@ -494,7 +524,7 @@ BSTEmpleado arbolEmpleados) {
                     // Tomar la primera tarea agregada
                     TareaDepartamento primera = tareas.get(0);
                     gestorTareas.eliminarTarea(primera.getDescripcion());
-                    System.out.println("Tarea realizada (FIFO): " + primera);
+                    System.out.println("Tarea realizada: " + primera); //(FIFO)
                 } else {
                     System.out.println("No hay tareas programadas.");
                 }
@@ -506,7 +536,7 @@ BSTEmpleado arbolEmpleados) {
                 if (!tareas.isEmpty()) {
                     TareaDepartamento mayorPrioridad = Collections.max(tareas);
                     gestorTareas.eliminarTarea(mayorPrioridad.getDescripcion());
-                    System.out.println("Tarea realizada (prioridad): " + mayorPrioridad);
+                    System.out.println("Tarea realizada: " + mayorPrioridad); // (mayor prioridad)
                 } else {
                     System.out.println("No hay tareas en la cola de prioridad.");
                 }
@@ -524,7 +554,7 @@ BSTEmpleado arbolEmpleados) {
     }
 
     private static void menuListaPendientes(Scanner sc, GestorTareas gestorTareas, BaseDatos db, BSTEmpleado arbolEmpleados) {
-        System.out.println("\n--- LISTA: TAREAS PENDIENTES ---");
+        System.out.println("\n--- TAREAS PENDIENTES ---"); //LISTA
         System.out.println("1) Agregar tarea pendiente");
         System.out.println("2) Eliminar tarea pendiente");
         System.out.println("3) Ver tareas pendientes");
@@ -592,7 +622,7 @@ BSTEmpleado arbolEmpleados) {
         List<TareaDepartamento> lista = new ArrayList<>(tareas);
         lista.sort((a,b) -> Integer.compare(b.getTiempoEstimadoMin(), a.getTiempoEstimadoMin()));
 
-        // nicializar n listas vacías
+        // inicializar n listas vacías
         List<List<TareaDepartamento>> res = new ArrayList<>();
         int[] carga = new int[nEmpleados];
         for (int i=0;i<nEmpleados;i++) res.add(new ArrayList<>());
