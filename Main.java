@@ -1,9 +1,10 @@
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import java.util.HashMap;
-
 public class Main {
+
+
+   
 // ===================== GESTOR TAREAS =====================
 static class GestorTareas {
     private HashMap<String, TareaDepartamento> tareas = new HashMap<>();
@@ -160,6 +161,12 @@ static class GestorTareas {
     // ===================== Main =====================
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+
+        // Mensaje de bienvenida
+    System.out.println("===================================");
+    System.out.println("    Bienvenido a nuestra empresa");
+    System.out.println("          ResidenciaPlus");
+    System.out.println("===================================");
 
         //GestorTareas
         GestorTareas gestorTareas = new GestorTareas();
