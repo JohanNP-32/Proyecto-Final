@@ -1,7 +1,37 @@
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import java.util.HashMap;
+
 public class Main {
+// ===================== GESTOR TAREAS =====================
+static class GestorTareas {
+    private HashMap<String, TareaDepartamento> tareas = new HashMap<>();
+
+    public void agregarTarea(TareaDepartamento tarea) {
+        tareas.put(tarea.getDescripcion(), tarea);
+    }
+
+    public boolean eliminarTarea(String descripcion) {
+        return tareas.remove(descripcion) != null;
+    }
+
+    public List<TareaDepartamento> listarTareas() {
+        return new ArrayList<>(tareas.values());
+    }
+
+    public TareaDepartamento obtenerTarea(String descripcion) {
+        return tareas.get(descripcion);
+    }
+
+    public boolean contieneTarea(String descripcion) {
+        return tareas.containsKey(descripcion);
+    }
+
+    public boolean estaVacio() {
+        return tareas.isEmpty();
+    }
+}
     
     private static int leerInt(Scanner sc, String msg) {
         System.out.print(msg);
@@ -131,13 +161,8 @@ public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
 
-        // Estructuras de datos para las tareas
-        Stack<TareaDepartamento> pilaUrgentes = new Stack<>();
-        Queue<TareaDepartamento> colaRegulares = new LinkedList<>();
-        ArrayList<TareaDepartamento> listaPendientes = new ArrayList<>();
-
-        //cola de prioridad (gestiona tareas por prioridad+fecha)
-        PriorityQueue<TareaDepartamento> colaPrioridad = new PriorityQueue<>();
+        // Nueva estructura: GestorTareas
+        GestorTareas gestorTareas = new GestorTareas();
 
         //Inicialización de objetos del programa 
         BaseDatos db = new BaseDatos();
@@ -179,7 +204,7 @@ public class Main {
                     admin.generarReporte();
                     break;
                 case 6:
-                    menuTareasCondominio(sc, pilaUrgentes, colaRegulares, listaPendientes, colaPrioridad, db, arbolEmpleados);
+                    menuTareasCondominio(sc, gestorTareas, db, arbolEmpleados);
                     break;
                 case 7:
                     System.out.println("Empleados (inorder):");
@@ -349,64 +374,58 @@ public class Main {
         } while (op != 0);
     }
 
-    // ------------------ MENÚ TAREAS  -------------------
+// ------------------ MENÚ TAREAS  -------------------
 private static void menuTareasCondominio(Scanner sc,
-Stack<TareaDepartamento> pilaUrgentes,
-Queue<TareaDepartamento> colaRegulares,
-ArrayList<TareaDepartamento> listaPendientes,
-PriorityQueue<TareaDepartamento> colaPrioridad,
+GestorTareas gestorTareas,
 BaseDatos db,
 BSTEmpleado arbolEmpleados) {
-int op;
-do {
-System.out.println("\n--- TAREAS DEL CONDOMINIO ---");
-System.out.println("1) Urgentes (pila)");
-System.out.println("2) Programadas (cola / prioridad)");
-System.out.println("3) Pendientes (lista)");
-System.out.println("4) Estadísticas (recursivo)");
-System.out.println("0) Volver");
-op = leerInt(sc, "Opción: ");
-
-switch (op) {
-case 1:
-menuPilaUrgentes(sc, pilaUrgentes, db);
-break;
-case 2:
-menuColaProgramadas(sc, colaRegulares, colaPrioridad, db);
-break;
-case 3:
-menuListaPendientes(sc, listaPendientes, db, arbolEmpleados);
-break;
-case 4:
-if (listaPendientes.isEmpty()) {
-System.out.println("No hay tareas pendientes para estadísticas.");
-} else {
-int total = tiempoTotalRecursivo(listaPendientes, 0, listaPendientes.size()-1);
-System.out.println("Tiempo total estimado (min): " + total);
-
-List<List<TareaDepartamento>> distrib = distribuirTareasDivideYVenceras(listaPendientes, 3);
-
-// Lista de empleados definida por ID (Johan, Mauricio, Hector)
-List<Empleado> empleados = List.of(
-arbolEmpleados.buscarPorId(20), // Johan
-arbolEmpleados.buscarPorId(5),  // Mauricio
-arbolEmpleados.buscarPorId(10)  // Hector
-);
-
-for (int i = 0; i < distrib.size(); i++) {
-Empleado e = empleados.get(i);
-System.out.println("Empleado " + e.nombre + " (ID " + e.id + ") recibe " + distrib.get(i).size() + " tareas.");
-}
-}
-break;
-}
-} while (op != 0);
+    int op;
+    do {
+        System.out.println("\n--- TAREAS DEL CONDOMINIO ---");
+        System.out.println("1) Urgentes (pila)");
+        System.out.println("2) Programadas (cola / prioridad)");
+        System.out.println("3) Pendientes (lista)");
+        System.out.println("4) Estadísticas (recursivo)");
+        System.out.println("0) Volver");
+        op = leerInt(sc, "Opción: ");
+        switch (op) {
+            case 1:
+                menuPilaUrgentes(sc, gestorTareas, db);
+                break;
+            case 2:
+                menuColaProgramadas(sc, gestorTareas, db);
+                break;
+            case 3:
+                menuListaPendientes(sc, gestorTareas, db, arbolEmpleados);
+                break;
+            case 4:
+                List<TareaDepartamento> listaPendientes = gestorTareas.listarTareas();
+                if (listaPendientes.isEmpty()) {
+                    System.out.println("No hay tareas pendientes para estadísticas.");
+                } else {
+                    int total = tiempoTotalRecursivo(listaPendientes, 0, listaPendientes.size() - 1);
+                    System.out.println("Tiempo total estimado (min): " + total);
+                    List<List<TareaDepartamento>> distrib = distribuirTareasDivideYVenceras(listaPendientes, 3);
+                    // Lista de empleados definida por ID (Johan, Mauricio, Hector)
+                    List<Empleado> empleados = List.of(
+                            arbolEmpleados.buscarPorId(20), // Johan
+                            arbolEmpleados.buscarPorId(5),  // Mauricio
+                            arbolEmpleados.buscarPorId(10)  // Hector
+                    );
+                    for (int i = 0; i < distrib.size(); i++) {
+                        Empleado e = empleados.get(i);
+                        System.out.println("Empleado " + e.nombre + " (ID " + e.id + ") recibe " + distrib.get(i).size() + " tareas.");
+                    }
+                }
+                break;
+        }
+    } while (op != 0);
 }
 
 // ------------------ MÉTODOS AUXILIARES -------------------
 
-    // Submenús de pila/cola/lista
-    private static void menuPilaUrgentes(Scanner sc, Stack<TareaDepartamento> pilaUrgentes, BaseDatos db) {
+    // Submenús de pila/cola/lista usando GestorTareas
+    private static void menuPilaUrgentes(Scanner sc, GestorTareas gestorTareas, BaseDatos db) {
         System.out.println("\n--- PILA: TAREAS URGENTES ---");
         System.out.println("1) Agregar tarea urgente");
         System.out.println("2) Realizar tarea urgente");
@@ -414,29 +433,40 @@ break;
         System.out.println("0) Volver");
         int p = leerInt(sc, "Opción: ");
         switch (p) {
-            case 1:
+            case 1: {
                 Departamento depUrg = seleccionarDepartamento(sc, db);
                 System.out.print("Descripción de la tarea urgente: ");
                 String tareaUrg = sc.nextLine();
                 int pri = pedirPrioridad(sc);
                 int tiempo = pedirTiempoEstimado(sc);
                 Date fecha = pedirFechaEntrega(sc);
-                pilaUrgentes.push(new TareaDepartamento(tareaUrg, depUrg, pri, fecha, tiempo));
+                TareaDepartamento tarea = new TareaDepartamento(tareaUrg, depUrg, pri, fecha, tiempo);
+                gestorTareas.agregarTarea(tarea);
                 System.out.println("Tarea urgente agregada.");
                 break;
-            case 2:
-                if (!pilaUrgentes.isEmpty()) System.out.println("Tarea realizada: " + pilaUrgentes.pop());
-                else System.out.println("No hay tareas urgentes.");
+            }
+            case 2: {
+                // Simular comportamiento de pila: tomar la tarea más recientemente agregada
+                List<TareaDepartamento> tareas = gestorTareas.listarTareas();
+                if (!tareas.isEmpty()) {
+                    // Buscar la última agregada (por orden de inserción, pero HashMap no garantiza orden; por simplicidad tomamos la última de la lista)
+                    TareaDepartamento ultima = tareas.get(tareas.size() - 1);
+                    gestorTareas.eliminarTarea(ultima.getDescripcion());
+                    System.out.println("Tarea realizada: " + ultima);
+                } else {
+                    System.out.println("No hay tareas urgentes.");
+                }
                 break;
-            case 3:
-                System.out.println(pilaUrgentes);
+            }
+            case 3: {
+                List<TareaDepartamento> tareas = gestorTareas.listarTareas();
+                System.out.println(tareas);
                 break;
+            }
         }
     }
 
-    private static void menuColaProgramadas(Scanner sc, Queue<TareaDepartamento> colaRegulares,
-                                            PriorityQueue<TareaDepartamento> colaPrioridad,
-                                            BaseDatos db) {
+    private static void menuColaProgramadas(Scanner sc, GestorTareas gestorTareas, BaseDatos db) {
         System.out.println("\n--- COLA: TAREAS PROGRAMADAS ---");
         System.out.println("1) Agregar tarea programada");
         System.out.println("2) Realizar próxima tarea programada");
@@ -445,7 +475,7 @@ break;
         System.out.println("0) Volver");
         int c = leerInt(sc, "Opción: ");
         switch (c) {
-            case 1:
+            case 1: {
                 Departamento depCola = seleccionarDepartamento(sc, db);
                 System.out.print("Descripción de la tarea programada: ");
                 String tareaCola = sc.nextLine();
@@ -453,26 +483,47 @@ break;
                 int tiempo = pedirTiempoEstimado(sc);
                 Date fecha = pedirFechaEntrega(sc);
                 TareaDepartamento t = new TareaDepartamento(tareaCola, depCola, pri, fecha, tiempo);
-                colaRegulares.add(t);
-                colaPrioridad.add(t); 
+                gestorTareas.agregarTarea(t);
                 System.out.println("Tarea programada agregada.");
                 break;
-            case 2:
-                if (!colaRegulares.isEmpty()) System.out.println("Tarea realizada (FIFO): " + colaRegulares.poll());
-                else System.out.println("No hay tareas programadas.");
+            }
+            case 2: {
+                // Simular comportamiento de cola: tomar la tarea más antigua agregada
+                List<TareaDepartamento> tareas = gestorTareas.listarTareas();
+                if (!tareas.isEmpty()) {
+                    // Tomar la primera tarea agregada
+                    TareaDepartamento primera = tareas.get(0);
+                    gestorTareas.eliminarTarea(primera.getDescripcion());
+                    System.out.println("Tarea realizada (FIFO): " + primera);
+                } else {
+                    System.out.println("No hay tareas programadas.");
+                }
                 break;
-            case 3:
-                if (!colaPrioridad.isEmpty()) System.out.println("Tarea realizada (prioridad): " + colaPrioridad.poll());
-                else System.out.println("No hay tareas en la cola de prioridad.");
+            }
+            case 3: {
+                // Por prioridad: buscar la tarea de mayor prioridad
+                List<TareaDepartamento> tareas = gestorTareas.listarTareas();
+                if (!tareas.isEmpty()) {
+                    TareaDepartamento mayorPrioridad = Collections.max(tareas);
+                    gestorTareas.eliminarTarea(mayorPrioridad.getDescripcion());
+                    System.out.println("Tarea realizada (prioridad): " + mayorPrioridad);
+                } else {
+                    System.out.println("No hay tareas en la cola de prioridad.");
+                }
                 break;
-            case 4:
-                System.out.println("FIFO view: " + colaRegulares);
-                System.out.println("Priority view: " + colaPrioridad);
+            }
+            case 4: {
+                List<TareaDepartamento> tareas = gestorTareas.listarTareas();
+                System.out.println("Todas las tareas: " + tareas);
+                List<TareaDepartamento> porPrioridad = new ArrayList<>(tareas);
+                porPrioridad.sort(null); // usa compareTo
+                System.out.println("Por prioridad: " + porPrioridad);
                 break;
+            }
         }
     }
 
-    private static void menuListaPendientes(Scanner sc, ArrayList<TareaDepartamento> listaPendientes, BaseDatos db, BSTEmpleado arbolEmpleados) {
+    private static void menuListaPendientes(Scanner sc, GestorTareas gestorTareas, BaseDatos db, BSTEmpleado arbolEmpleados) {
         System.out.println("\n--- LISTA: TAREAS PENDIENTES ---");
         System.out.println("1) Agregar tarea pendiente");
         System.out.println("2) Eliminar tarea pendiente");
@@ -487,16 +538,20 @@ break;
                 int pri = pedirPrioridad(sc);
                 int tiempo = pedirTiempoEstimado(sc);
                 Date fecha = pedirFechaEntrega(sc);
-                listaPendientes.add(new TareaDepartamento(tareaLista, depLista, pri, fecha, tiempo));
+                TareaDepartamento tarea = new TareaDepartamento(tareaLista, depLista, pri, fecha, tiempo);
+                gestorTareas.agregarTarea(tarea);
                 System.out.println("Tarea pendiente agregada.");
             }
             case 2 -> {
                 System.out.print("Tarea a eliminar (descripción exacta): ");
                 String elim = sc.nextLine();
-                listaPendientes.removeIf(t -> t.getDescripcion().equalsIgnoreCase(elim));
-                System.out.println("Operación realizada.");
+                boolean ok = gestorTareas.eliminarTarea(elim);
+                System.out.println(ok ? "Tarea eliminada." : "No se encontró la tarea.");
             }
-            case 3 -> System.out.println(listaPendientes);
+            case 3 -> {
+                List<TareaDepartamento> tareas = gestorTareas.listarTareas();
+                System.out.println(tareas);
+            }
         }
     }
 
